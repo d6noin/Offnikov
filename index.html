@@ -2,39 +2,173 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Кровавый счётчик слов</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Счётчик слов</title>
 <style>
-* {
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: url('bp.jpg') no-repeat center center fixed;
+    background-size: cover;
+    color: #fff;
+  }
+  #logo {
+    display: block;
+    margin: 10px auto;
+    max-width: 80%;
+  }
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 5px;
+  }
+  .counters {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    margin-bottom: 5px;
+    font-size: 12px;
+    background: rgba(0,0,0,0.5);
+    padding: 5px;
+    border-radius: 5px;
+  }
+  #textInput {
+    width: 95%;
+    height: 300px;
+    font-size: 10px;
+    line-height: 1.2;
+    padding: 5px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    border: 1px solid red;
+    border-radius: 5px;
+    resize: none;
+    overflow-y: scroll;
+  }
+  #log {
+    width: 95%;
+    height: 60px;
+    margin-top: 5px;
+    font-size: 10px;
+    background: rgba(0,0,0,0.7);
+    color: red;
+    padding: 5px;
+    overflow-y: auto;
+    border-radius: 5px;
+    border: 1px solid #900;
+  }
+  .buttons {
+    margin-top: 5px;
+  }
+  button {
+    margin: 0 5px;
+    padding: 5px 10px;
+    font-size: 12px;
+    background: red;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .forbidden {
+    color: red;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <img id="logo" src="logo.jpg" alt="Логотип">
+  <div class="counters">
+    <span id="wordCount">Слов: 0</span>
+    <span id="paraCount">Абзацев: 0</span>
+    <span id="charCount">Символов: 0</span>
+    <span id="sentenceCount">Предложений: 0</span>
+  </div>
+  <textarea id="textInput" placeholder="Введите текст здесь..."></textarea>
+  <div id="log"></div>
+  <div class="buttons">
+    <button id="copyBtn">Copy</button>
+    <button id="pasteBtn">Paste</button>
+    <button id="resetBtn">Reset</button>
+  </div>
+</div>
+
+<script>
+const textInput = document.getElementById('textInput');
+const log = document.getElementById('log');
+const wordCount = document.getElementById('wordCount');
+const paraCount = document.getElementById('paraCount');
+const charCount = document.getElementById('charCount');
+const sentenceCount = document.getElementById('sentenceCount');
+const copyBtn = document.getElementById('copyBtn');
+const pasteBtn = document.getElementById('pasteBtn');
+const resetBtn = document.getElementById('resetBtn');
+
+function updateCounts() {
+  let text = textInput.value;
+  let forbiddenCount = 0;
+  let forbiddenWords = [];
+
+  // Заменяем все буквы кроме русских на ❌
+  text = text.split(' ').map(word => {
+    let newWord = '';
+    let hasForbidden = false;
+    for (let char of word) {
+      if (!char.match(/[а-яёА-ЯЁ0-9.,!?:;"'()\-]/)) {
+        newWord += '❌';
+        hasForbidden = true;
+        forbiddenCount++;
+      } else {
+        newWord += char;
+      }
+    }
+    if (hasForbidden) forbiddenWords.push(word);
+    return newWord;
+  }).join(' ');
+
+  textInput.value = text;
+
+  // Счётчики
+  const words = text.trim() ? text.trim().split(/\s+/) : [];
+  const paragraphs = text.split(/\n/).length;
+  const chars = text.length;
+  const sentences = (text.match(/[.!?]+/g) || []).length;
+
+  wordCount.textContent = `Слов: ${words.length}`;
+  paraCount.textContent = `Абзацев: ${paragraphs}`;
+  charCount.textContent = `Символов: ${chars}`;
+  sentenceCount.textContent = `Предложений: ${sentences}`;
+
+  // Лог
+  if (forbiddenCount > 0) {
+    log.textContent = `Найдено запрещённых символов: ${forbiddenCount} в словах: ${forbiddenWords.join(', ')}`;
+  } else {
+    log.textContent = '';
+  }
 }
 
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  background: #000;
-  overflow: hidden;
-  font-family: Arial, sans-serif;
-}
+textInput.addEventListener('input', updateCounts);
 
-body {
-  background: url("bp.jpg") no-repeat center center fixed;
-  background-size: cover;
-}
+copyBtn.addEventListener('click', () => {
+  navigator.clipboard.writeText(textInput.value);
+});
 
-/* затемнение */
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.75);
-}
+pasteBtn.addEventListener('click', async () => {
+  const text = await navigator.clipboard.readText();
+  textInput.value += text;
+  updateCounts();
+});
 
-/* контейнер */
-.app {
+resetBtn.addEventListener('click', () => {
+  textInput.value = '';
+  updateCounts();
+});
+</script>
+</body>
+</html>.app {
   position: relative;
   z-index: 2;
   height: 100%;
